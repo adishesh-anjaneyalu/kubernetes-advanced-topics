@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>K8s Advanced Cheat Sheet — NetworkPolicy · KEDA · AWS Secrets Manager</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap');
+  :root {
+    --bg:#080c18;--surface:#0d1224;--surface2:#121830;--surface3:#161e38;
+    --border:#1a2540;--text:#c8d6f0;--text-dim:#4a5880;--text-bright:#f0f6ff;
+    --blue:#38bdf8;--purple:#a78bfa;--green:#34d399;--yellow:#fbbf24;
+    --red:#f87171;--pink:#f472b6;--orange:#fb923c;--teal:#2dd4bf;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;line-height:1.6;padding:36px 28px;}
+  .header{text-align:center;margin-bottom:52px;}
+  .header-badge{display:inline-flex;gap:10px;margin-bottom:20px;}
+  .badge{font-size:.7rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:5px 14px;border-radius:20px;font-family:'JetBrains Mono',monospace;}
+  .badge-blue{background:#0c1f35;color:var(--blue);border:1px solid #1a3a5c;}
+  .badge-purple{background:#160d35;color:var(--purple);border:1px solid #2d1a5c;}
+  .badge-green{background:#062010;color:var(--green);border:1px solid #0f3d20;}
+  .header h1{font-size:2.8rem;font-weight:800;color:var(--text-bright);letter-spacing:-1.5px;line-height:1.1;}
+  .header h1 .np{color:var(--blue);} .header h1 .kd{color:var(--purple);} .header h1 .asm{color:var(--green);}
+  .header p{margin-top:10px;color:var(--text-dim);font-size:.9rem;letter-spacing:2px;text-transform:uppercase;}
+  .section{max-width:1440px;margin:0 auto 60px;}
+  .section-header{display:flex;align-items:center;gap:16px;margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid var(--border);}
+  .section-num{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;}
+  .section-title{font-size:1.5rem;font-weight:800;color:var(--text-bright);letter-spacing:-.5px;}
+  .section-sub{font-size:.85rem;color:var(--text-dim);margin-top:2px;}
+  .section-tag{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:.7rem;padding:4px 14px;border-radius:20px;font-weight:700;flex-shrink:0;}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+  .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;}
+  .col-2{grid-column:span 2;}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;}
+  .card-top{padding:14px 18px 12px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border);background:var(--surface2);}
+  .card-icon{font-size:1.2rem;}
+  .card-title{font-size:.95rem;font-weight:700;color:var(--text-bright);}
+  .card-desc{font-size:.75rem;color:var(--text-dim);margin-top:1px;}
+  .cb-label{margin-left:auto;font-size:.65rem;color:var(--text-dim);background:var(--surface3);padding:2px 8px;border-radius:10px;}
+  .card-body{padding:16px 18px;}
+  .explain{padding:10px 14px;border-radius:8px;font-size:.83rem;margin-bottom:14px;line-height:1.6;border-left:3px solid;}
+  .eb{background:#060f1e;border-color:var(--blue);} .eb strong{color:var(--blue);}
+  .ep{background:#0c0820;border-color:var(--purple);} .ep strong{color:var(--purple);}
+  .eg{background:#04150e;border-color:var(--green);} .eg strong{color:var(--green);}
+  .ey{background:#150e00;border-color:var(--yellow);} .ey strong{color:var(--yellow);}
+  .er{background:#150606;border-color:var(--red);} .er strong{color:var(--red);}
+  .cb{background:#03060f;border:1px solid var(--border);border-radius:10px;overflow:hidden;font-family:'JetBrains Mono',monospace;font-size:.76rem;margin-bottom:12px;}
+  .cb-top{background:#070c18;padding:6px 12px;display:flex;align-items:center;gap:5px;border-bottom:1px solid var(--border);}
+  .dot{width:9px;height:9px;border-radius:50%;}
+  .dr{background:#ff5f57;} .dy{background:#ffbd2e;} .dg{background:#28c840;}
+  .cb-file{margin-left:6px;font-size:.68rem;color:var(--text-dim);}
+  pre{padding:12px 14px;overflow-x:auto;line-height:1.75;white-space:pre;}
+  .k{color:#7dd3fc;} .v{color:#86efac;} .n{color:#fca5a5;} .c{color:#374b6b;font-style:italic;}
+  .kw{color:#c084fc;} .hi{color:#fde68a;font-weight:700;} .se{color:#f87171;}
+  .cmd{color:#34d399;} .arg{color:#fb923c;} .di{color:#4a5880;}
+  .ok{color:#34d399;font-weight:700;}
+  .rules{display:flex;flex-direction:column;gap:6px;margin-top:12px;}
+  .rule{display:flex;align-items:flex-start;gap:8px;font-size:.8rem;padding:7px 12px;border-radius:7px;background:var(--surface2);border:1px solid var(--border);line-height:1.4;}
+  .flow{background:#03060f;border:1px solid var(--border);border-radius:10px;padding:14px 16px;font-family:'JetBrains Mono',monospace;font-size:.76rem;line-height:2;margin-bottom:12px;}
+  .fa{color:var(--blue);} .fb{color:var(--text-bright);} .fc{color:var(--yellow);}
+  .fd{color:var(--green);} .fe{color:var(--red);} .ff{color:var(--purple);}
+  .table{width:100%;border-collapse:collapse;font-size:.8rem;font-family:'JetBrains Mono',monospace;}
+  .table th{background:var(--surface3);color:var(--text-bright);font-weight:700;padding:8px 14px;text-align:left;border-bottom:1px solid var(--border);}
+  .table td{padding:7px 14px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:top;}
+  .table tr:last-child td{border-bottom:none;} .table tr:hover td{background:var(--surface2);}
+  .pills{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;}
+  .pill{font-size:.7rem;font-family:'JetBrains Mono',monospace;font-weight:700;padding:3px 10px;border-radius:20px;}
+  .pb{background:#0c1f35;color:var(--blue);border:1px solid #1a3a5c;}
+  .pp{background:#160d35;color:var(--purple);border:1px solid #2d1a5c;}
+  .pg{background:#062010;color:var(--green);border:1px solid #0f3d20;}
+  .py{background:#150e00;color:var(--yellow);border:1px solid #3d2900;}
+  .alert{display:flex;gap:10px;padding:10px 14px;border-radius:8px;font-size:.82rem;margin-bottom:12px;align-items:flex-start;border:1px solid;}
+  .alert-icon{font-size:1rem;flex-shrink:0;}
+  .ag{background:#04150e;border-color:#0f3d20;}
+  .ay{background:#150e00;border-color:#3d2900;}
+  .ab{background:#060f1e;border-color:#1a3a5c;}
+  .steps{display:flex;flex-direction:column;gap:0;}
+  .step{display:flex;gap:14px;position:relative;}
+  .step:not(:last-child)::before{content:'';position:absolute;left:15px;top:32px;bottom:0;width:2px;background:var(--border);}
+  .step-num{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:800;flex-shrink:0;position:relative;z-index:1;}
+  .step-content{flex:1;padding-bottom:20px;}
+  .step-title{font-size:.88rem;font-weight:700;color:var(--text-bright);margin-bottom:8px;margin-top:5px;}
+  hr{border:none;border-top:1px solid var(--border);margin:48px 0;}
+  .footer{text-align:center;padding-top:24px;border-top:1px solid var(--border);color:var(--text-dim);font-size:.78rem;letter-spacing:1px;max-width:1440px;margin:0 auto;}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-badge">
+    <span class="badge badge-blue">NetworkPolicy</span>
+    <span class="badge badge-purple">KEDA</span>
+    <span class="badge badge-green">AWS Secrets Manager</span>
+  </div>
+  <h1><span class="np">Network</span> · <span class="kd">KEDA</span> · <span class="asm">Secrets</span></h1>
+  <p>Production Kubernetes · Advanced Concepts Cheat Sheet</p>
+</div>
+
+<!-- ══════════════════════════════════ SECTION 1 — NETWORKPOLICY ══ -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-num" style="background:#061525;border:1px solid #1a3a5c;">🌐</div>
+    <div>
+      <div class="section-title" style="color:var(--blue);">NetworkPolicy</div>
+      <div class="section-sub">Firewall between pods — control who can talk to who</div>
+    </div>
+    <div class="section-tag pb">networking.k8s.io/v1</div>
+  </div>
+
+  <div class="grid-2">
+
+    <div class="card">
+      <div class="card-top"><span class="card-icon">🤔</span><div><div class="card-title">Why NetworkPolicy Exists</div><div class="card-desc">Without it every pod can reach every other pod</div></div></div>
+      <div class="card-body">
+        <div class="explain er"><strong>The Problem:</strong> By default Kubernetes has no firewall between pods. A hacked frontend pod can directly attack your database on port 5432. That is a serious security risk in production.</div>
+        <div class="flow">
+<span class="fe">WITHOUT NetworkPolicy — dangerous:</span>
+<span class="fb">frontend  </span><span class="fa">──→</span><span class="fb"> postgres</span>  <span class="fe">✅ allowed (should be blocked!)</span>
+<span class="fb">any pod   </span><span class="fa">──→</span><span class="fb"> any pod  </span>  <span class="fe">✅ allowed (very dangerous!)</span>
+
+<span class="fd">WITH NetworkPolicy — safe:</span>
+<span class="fb">frontend  </span><span class="fa">──→</span><span class="fb"> backend  </span>  <span class="fd">✅ allowed</span>
+<span class="fb">frontend  </span><span class="fa">──→</span><span class="fb"> postgres </span>  <span class="fe">❌ BLOCKED</span>
+<span class="fb">backend   </span><span class="fa">──→</span><span class="fb"> postgres </span>  <span class="fd">✅ allowed</span>
+<span class="fb">internet  </span><span class="fa">──→</span><span class="fb"> postgres </span>  <span class="fe">❌ BLOCKED</span>
+        </div>
+        <div class="rules">
+          <div class="rule"><span>⚠️</span> Needs a CNI that supports NetworkPolicy — use Calico or Cilium on EKS</div>
+          <div class="rule"><span>💡</span> AWS VPC CNI now supports NetworkPolicy from EKS 1.25+ with addon enabled</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-top"><span class="card-icon">🏗️</span><div><div class="card-title">NetworkPolicy Structure</div><div class="card-desc">podSelector + ingress + egress rules</div></div></div>
+      <div class="card-body">
+        <div class="explain eb"><strong>How it works:</strong> Pick which pods this policy applies to using <code>podSelector</code>. Then define what traffic is allowed IN (ingress) and OUT (egress). Everything not explicitly allowed is blocked.</div>
+        <div class="cb">
+          <div class="cb-top"><div class="dot dr"></div><div class="dot dy"></div><div class="dot dg"></div><span class="cb-file">networkpolicy.yaml</span></div>
+          <pre><span class="kw">apiVersion</span><span class="di">: </span><span class="v">networking.k8s.io/v1</span>
+<span class="kw">kind</span><span class="di">: </span><span class="v">NetworkPolicy</span>
+<span class="k">metadata</span><span class="di">:</span>
+  <span class="k">name</span><span class="di">: </span><span class="hi">protect-postgres</span>
+  <span class="k">namespace</span><span class="di">: </span><span class="v">production</span>
+<span class="k">spec</span><span class="di">:</span>
+  <span class="k">podSelector</span><span class="di">:</span>          <span class="c"># which pods this applies to</span>
+    <span class="k">matchLabels</span><span class="di">:</span>
+      <span class="k">app</span><span class="di">: </span><span class="hi">postgres</span>
+  <span class="k">policyTypes</span><span class="di">:</span>
+    <span class="di">- </span><span class="v">Ingress</span>              <span class="c"># control who can send TO postgres</span>
+    <span class="di">- </span><span class="v">Egress</span>               <span class="c"># control where postgres can send</span>
+  <span class="k">ingress</span><span class="di">:</span>               <span class="c"># allowed incoming connections</span>
+    <span class="di">- </span><span class="k">from</span><span class="di">:</span>
+        <span class="di">- </span><span class="k">podSelector</span><span class="di">:</span>
+            <span class="k">matchLabels</span><span class="di">:</span>
+              <span class="k">app</span><span class="di">: </span><span class="v">backend</span> <span class="c"># ONLY backend allowed</span>
+      <span class="k">ports</span><span class="di">:</span>
+        <span class="di">- </span><span class="k">port</span><span class="di">: </span><span class="n">5432</span></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-top"><span class="card-icon">🚫</span><div><div class="card-title">Step 1 — Deny All First (Best Practice)</div><div class="card-desc">Zero-trust: block everything, then allow only what's needed</div></div></div>
+      <div class="card-body">
+        <div class="explain ey"><strong>Production Rule:</strong> Always apply deny-all FIRST in every namespace. Then add specific allow policies. This is called zero-trust networking — the industry standard.</div>
+        <div class="cb">
+          <div class="cb-top"><div class="dot dr"></div><div class="dot dy"></div><div class="dot dg"></div><span class="cb-file">deny-all.yaml</span><span class="cb-label">apply this FIRST</span></div>
+          <pre><span class="kw">apiVersion</span><span class="di">: </span><span class="v">networking.k8s.io/v1</span>
+<span class="kw">kind</span><span class="di">: </span><span class="v">NetworkPolicy</span>
+<span class="k">metadata</span><span class="di">:</span>
+  <span class="k">name</span><span class="di">: </span><span class="hi">deny-all</span>
+  <span class="k">namespace</span><span class="di">: </span><span class="v">production</span>
+<span class="k">spec</span><span class="di">:</span>
+  <span class="k">podSelector</span><span class="di">: {}</span>        <span class="c"># {} = applies to ALL pods</span>
+  <span class="k">policyTypes</span><span class="di">:</span>
+    <span class="di">- </span><span class="v">Ingress</span>
+    <span class="di">- </span><span class="v">Egress</span>
+  <span class="c"># No ingress/egress rules = EVERYTHING blocked!</span></pre>
+        </div>
+        <div class="alert ay"><span class="alert-icon">⚠️</span> After deny-all pods lose connectivity! Apply your allow policies immediately after or do it in the same kubectl apply.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-top"><span class="card-icon">✅</span><div><div class="card-title">Step 2 — Allow Specific Traffic</div><div class="card-desc">One policy per connection you need</div></div></div>
+      <div class="card-body">
+        <div class="cb">
+          <div class="cb-top"><div class="dot dr"></div><div class="dot dy"></div><div class="dot dg"></div><span class="cb-file">allow-backend-to-postgres.yaml</span></div>
+          <pre><span class="k">spec</span><span class="di">:</span>
+  <span class="k">podSelector</span><span class="di">:</span>
+    <span class="k">matchLabels</span><span class="di">:</span>
+      <span class="k">app</span><span class="di">: </span><span class="hi">postgres</span>         <span class="c"># protects postgres pods</span>
+  <span class="k">policyTypes</span><span class="di">: [</span><span class="v">Ingress</span><span class="di">]</span>
+  <span class="k">ingress</span><span class="di">:</span>
+    <span class="di">- </span><span class="k">from</span><span class="di">:</span>
+        <span class="di">- </span><span class="k">podSelector</span><span class="di">:</span>
+            <span class="k">matchLabels</span><span class="di">:</span>
+              <span class="k">app</span><span class="di">: </span><span class="v">backend</span>   <span class="c"># only backend can connect</span>
+      <span class="k">ports</span><span class="di">:</span>
+        <span class="di">- </span><span class="k">port</span><span class="di">: </span><span class="n">5432</span></pre>
+        </div>
+        <div class="cb">
+          <div class="cb-top"><div class="dot dr"></div><div class="dot dy"></div><div class="dot dg"></div><span class="cb-file">allow-monitoring.yaml</span></div>
+          <pre><span class="c"># Allow Prometheus from monitoring namespace</span>
+<span class="k">spec</span><span class="di">:</span>
+  <span class="k">podSelector</span><span class="di">: {}</span>          <span class="c"># all pods</span>
+  <span class="k">policyTypes</span><span class="di">: [</span><span class="v">Ingress</span><span class="di">]</span>
+  <span class="k">ingress</span><span class="di">:</span>
+    <span class="di">- </span><span class="k">from</span><span class="di">:</span>
+        <span class="di">- </span><span class="k">namespaceSelector</span><span class="di">:</span> <span class="c"># from another namespace!</span>
+            <span class="k">matchLabels</span><span class="di">:</span>
+              <span class="k">name</span><span class="di">: </span><span class="v">monitoring</span>
+      <span class="k">ports</span><span class="di">:</span>
+        <span class="di">- </span><span class="k">port</span><span class="di">: </span><span class="n">9090</span></pre>
+        </div>
+        <div class="rules">
+          <div class="rule"><span>🌍</span> Use <code>namespaceSelector</code> for traffic from pods in other namespaces like monitoring</div>
+          <div class="rule"><span>🔑</span> Pod labels in Deployment must match the <code>podSelector</code> in NetworkPolicy</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<hr>
+
+<!-- ══════════════════════════════════ SECTION 2 — KEDA ══ -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-num" style="background:#100820;border:1px solid #2d1a5c;">⚡</div>
+    <div>
+      <div class="section-title" style="color:var(--purple);">KEDA — Kubernetes Event Driven Autoscaler</div>
+      <div class="section-sub">Scale on real events — SQS, Kafka, Cron, HTTP — and scale to ZERO to save cost</div>
+    </div>
+    <div class="section-tag pp">keda.sh/v1alpha1</div>
+  </div>
+
+  <div class="grid-2">
+
+    <div class="card">
+      <div class="card-top"><span class="card-icon">⚖️</span><div><div class="card-title">HPA vs KEDA</div><div class="card-desc">Why KEDA is more powerful in production</div></div></div>
+      <div class="card-body">
+        <div class="explain ep"><strong>HPA</strong> only watches CPU/memory — reactive and slow. <strong>KEDA</strong> watches real workload events and can scale to <strong>zero pods</strong> saving huge cost when idle!</div>
+        <table class="table">
+          <tr><th>Feature</th><th>HPA</th><th>KEDA</th></tr>
+          <tr><td>Scale trigger</td><td style="color:var(--yellow)">CPU / Memory only</td><td style="color:var(--green)">SQS, Kafka, Cron, HTTP...</td></tr>
+          <tr><td>Scale to zero</td><td style="color:var(--red)">❌ min 1 pod</td><td style="color:var(--green)">✅ 0 pods when idle!</td></tr>
+          <tr><td>AWS SQS support</td><td style="color:var(--red)">❌ No</td><td style="color:var(--green)">✅ Native support</td></tr>
+          <tr><td>Cost saving</td><td style="color:var(--yellow)">Some</td><td style="color:var(--green)">High — zero idle pods</td></tr>
+          <tr><td>Production use</td><td>Common</td><td style="color:var(--green)">Microsoft, Adobe, Alibaba</td></tr>
+        </table>
+        <div class="alert ag" style="margin-top:12px;"><span class="alert-icon">✅</span> KEDA is 100% production-ready. Used at massive scale by major companies worldwide.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-top"><span class="card-icon">📦</span><div><div class="card-title">How to Install KEDA on EKS</div><div class="card-desc">Helm install — takes under 2 minutes</div></div></div>
+      <div class="card-body">
+        <div class="steps">
+          <div class="step">
+            <div class="step-num" style="background:#160d35;color:var(--purple);border:1px solid #2d1a5c;">1</div>
+            <div class="step-content">
+              <div class="step-title">Add Helm Repo</div>
+              <div class="cb"><div class="cb-top"><div class="dot dr"></div><div class="dot dy"></div><div class="dot dg"></div><span class="cb-file">terminal</span></div>
+              <pre><span class="cmd">helm repo add</span> <span class="arg">kedacore</span> <span class="v">https://kedacore.github.io/charts</span>
+<span class="cmd">helm repo update</span></pre></div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num" style="background:#160d35;color:var(--purple);border:1px solid #2d1a5c;">2</div>
+            <div class="step-content">
+              <div class="step-title">Install KEDA</div>
+              <div class="cb"><div class="cb-top"><div class="dot dr"></div><div class="dot dy"></div><div class="dot dg"></div><span class="cb-file">terminal</span></div>
+              <pre><span class="cmd">helm install</span> <span class="arg">keda</span> kedacore/keda \
+  <span class="arg">--namespace</span> keda \
+  <span class="arg">--create-namespace</span></pre></div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num" style="background:#160d35;color:var(--purple);border:1px solid #2d1a5c;">3</div>
+            <div class="step-content">
+              <div class="step-title">Verify Installation</div>
+              <div class="cb"><div class="cb-top"><div class="dot dr"></div><div class="dot dy"></div><div class="dot dg"></div><span class="cb-file">terminal</span></div>
+              <pre><span class="cmd">kubectl get pods -n keda</span>
+<span class="c"># You should see:</span>
+<span class="ok">keda-operator-xxx            Running</span>
+<span class="ok">keda-operator-metrics-xxx    Running</span></pre></div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num" style="background:#160d35;color:var(--purple);border:1px solid #2d1a5c;">4</div>
+            <div class="step-content">
+              <div class="step-title">IAM Permission for SQS</div>
+              <div class="cb"><div class="cb-top"><div class="dot dr"></div><div class="dot dy"></div><div class="dot dg"></div><span class="cb-file">terminal</span></div>
+              <pre><span class="c"># Attach to Node Group OR use IRSA:</span>
+<span class="v">AmazonSQSReadOnlyAccess</span>
+<span class="c"># IRSA = best practice in production</span></pre></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-top"><span class="card-icon">📨</span><div><div class="card-title">KEDA with AWS SQS — Full Example</div><div class="card-desc">Scale workers based on SQS queue message count</div></div></div>
+      <div class="card-body">
+        <div class="flow">
+<span class="fc">How KEDA + SQS works:</span>
+<span class="fb">[SQS Queue]</span> <span class="fa">← KEDA checks every 30s</span>
+<span class="fb">0 messages</span>   <span class="fa">→</span> <span class="fd">0 worker pods (saves cost!)</span>
+<span class="fb">100 messages</span> <span class="fa">→</span> <span class="fd">10 worker pods</span>
+<span class="fb">500 messages</span> <span class="fa">→</span> <span class="fd">20 worker pods (max)</span>
+<span class="fb">0 messages</span>   <span class="fa">→</span> <span class="fd">back to 0 pods after cooldown</span>
+        </div>
+        <div class="cb">
+          <div class="cb-top"><div class="dot dr"></div><div class="dot dy"></div><div class="dot dg"></div><span class="cb-file">keda-sqs.yaml</span><span class="cb-label">most common in production</span></div>
+          <pre><span class="c"># TriggerAuthentication — how KEDA connects to AWS</span>
+<span class="kw">apiVersion</span><span class="di">: </span><span class="v">keda.sh/v1alpha1</span>
+<span class="kw">kind</span><span class="di">: </span><span class="v">TriggerAuthentication</span>
+<span class="k">metadata</span><span class="di">:</span>
+  <span class="k">name</span><span class="di">: </span><span class="hi">aws-trigger-auth</span>
+  <span class="k">namespace</span><span class="di">: </span><span class="v">production</span>
+<span class="k">spec</span><span class="di">:</span>
+  <span class="k">podIdentity</span><span class="di">:</span>
+    <span class="k">provider</span><span class="di">: </span><span class="v">aws-eks</span>         <span class="c"># uses IRSA — no keys needed!</span>
+<span class="di">---</span>
+<span class="c"># ScaledObject — the main config</span>
+<span class="kw">apiVersion</span><span class="di">: </span><span class="v">keda.sh/v1alpha1</span>
+<span class="kw">kind</span><span class="di">: </span><span class="v">ScaledObject</span>
+<span class="k">metadata</span><span class="di">:</span>
+  <span class="k">name</span><span class="di">: </span><span class="hi">worker-scaledobject</span>
+  <span class="k">namespace</span><span class="di">: </span><span class="v">production</span>
+<span class="k">spec</span><span class="di">:</span>
+  <span class="k">scaleTargetRef</span><span class="di">:</span>
+    <span class="k">name</span><span class="di">: </span><span class="hi">worker-deployment</span>    <span class="c"># your Deployment name</span>
+  <span class="k">minReplicaCount</span><span class="di">: </span><span class="n">0</span>           <span class="c"># scale to ZERO when idle!</span>
+  <span class="k">maxReplicaCount</span><span class="di">: </span><span class="n">20</span>
+  <span class="k">pollingInterval</span><span class="di">: </span><span class="n">30</span>          <span class="c"># check every 30 seconds</span>
+  <span class="k">cooldownPeriod</span><span class="di">: </span><span class="n">300</span>          <span class="c"># wait 5min before scaling down</span>
+  <span class="k">triggers</span><span class="di">:</span>
+    <span class="di">- </span><span class="k">type</span><span class="di">: </span><span class="v">aws-sqs-queue</span>
+      <span class="k">authenticationRef</span><span class="di">:</span>
+        <span class="k">name</span><span class="di">: </span><span class="v">aws-trigger-auth</span>
+      <span class="k">metadata</span><span class="di">:</span>
+        <span class="k">queueURL</span><span class="di">: </span><span class="v">https://sqs.ap-south-1.amazonaws.com/283904064984/orders-queue</span>
+        <span class="k">queueLength</span><span class="di">: </span><span class="v">"10"</span>      <span class="c"># 1 pod per 10 messages</span>
+        <span class="k">awsRegion</span><span class="di">: </span><span class="v">ap-south-1</span></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-top"><span class="card-icon">🔧</span><div><div class="card-title">Other KEDA Triggers</div><div class="card-desc">Cron, Kafka, Prometheus — all used in production</div></div></div>
+      <div class="card-body">
+        <div class="pills"><span class="pill pp">Cron</span><span class="pill py">schedule based</span></div>
+        <div class="cb"><div class="cb-top"><div class="dot dr"></div><div class="dot dy"></div><div class="dot dg"></div><span class="cb-file">keda-cron.yaml</span></div>
+        <pre><span class="c"># Scale up during business hours, down at night</span>
+<span class="k">triggers</span><span class="di">:</span>
+  <span class="di">- </span><span class="k">type</span><span class="di">: </span><span class="v">cron</span>
+    <span class="k">metadata</span><span class="di">:</span>
+      <span class="k">timezone</span><span class="di">: </span><span class="v">Asia/Kolkata</span>
+      <span class="k">start</span><span class="di">: </span><span class="v">"0 9 * * 1-5"</span>    <span class="c"># 9AM Mon-Fri</span>
+      <span class="k">end</span><span class="di">: </span><span class="v">"0 18 * * 1-5"</span>     <span class="c"># 6PM Mon-Fri</span>
+      <span class="k">desiredReplicas</span><span class="di">: </span><span class="v">"10"</span></pre></div>
+        <div class="pills" style="margin-top:8px;"><span class="pill pp">Kafka</span><span class="pill pb">consumer lag</span></div>
+        <div class="cb"><div class="cb-top"><div class="dot dr"></div><div class="dot dy"></div><div class="dot dg"></div><span class="cb-file">keda-kafka.yaml</span></div>
+        <pre><span class="k">triggers</span><span class="di">:</span>
+  <span class="di">- </span><span class="k">type</span><span class="di">: </span><span class="v">kafka</span>
+    <span class="k">metadata</span><span class="di">:</span>
+      <span class="k">bootstrapServers</span><span class="di">: </span><span class="v">kafka:9092</span>
+      <span class="k">consumerGroup</span><span class="di">: </span><span class="v">my-group</span>
+      <span class="k">topic</span><span class="di">: </span><span class="v">orders-topic</span>
+      <span class="k">lagThreshold</span><span class="di">: </span><span class="v">"100"</span>    <span class="c"># 1 pod per 100 lag</span></pre></div>
+        <div class="rules">
+          <div class="rule"><span>💰</span> Scale to zero = biggest benefit — idle workers cost nothing</div>
+          <div class="rule"><span>💡</span> ScaledObject replaces HPA — never use both on same Deployment</div>
+          <div class="rule"><span>🔍</span> 60+ scalers available at keda.sh/docs/scalers</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<hr>
+
+<!-- ══════════════════════════════════ SECTION 3 — AWS SECRETS MANAGER ══ -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-num" style="background:#041510;border:1px solid #0f3d20;">🔐</div>
+    <div>
+      <div class="section-title" style="color:var(--green);">AWS Secrets Manager + External Secrets Operator</div>
+      <div class="section-sub">Fetch secrets from AWS automatically — no passwords ever in Git!</div>
+    </div>
+    <div class="section-tag pg">external-secrets.io/v1beta1</div>
+  </div>
+
+  <div class="grid-2">
+
+    <div class="card">
+      <div class="card-top"><span class="card-icon">🤔</span><div><div class="card-title">The Problem With Normal K8s Secrets</div><div class="card-desc">base64 is NOT encryption — anyone can decode it</div></div></div>
+      <div class="card-body">
+        <div class="explain er"><strong>Big Problem:</strong> Kubernetes Secrets are just base64 encoded — NOT encrypted. If your YAML gets into Git, anyone can decode the password in seconds.</div>
+        <div class="flow">
+<span class="fe">BAD WAY — what beginners do:</span>
+<span class="fb">secret.yaml</span> <span class="fa">→</span> <span class="fe">pushed to Git → password visible!</span>
+<span class="fb">base64 decode</span> <span class="fa">→</span> <span class="fe">plain text password — anyone can see!</span>
+
+<span class="fd">GOOD WAY — production standard:</span>
+<span class="fb">Password stored in</span> <span class="fd">AWS Secrets Manager (encrypted)</span>
+  <span class="fa">↓</span>
+<span class="ff">External Secrets Operator</span> <span class="fa">fetches automatically</span>
+  <span class="fa">↓</span>
+<span class="fd">Kubernetes Secret created inside cluster only</span>
+  <span class="fa">↓</span>
+<span class="fb">Pod uses it as env var</span>
+<span class="fd">Zero passwords in Git. Ever.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-top"><span class="card-icon">⚙️</span><div><div class="card-title">How It Works — 3 Resources</div><div class="card-desc">SecretStore + ExternalSecret = automatic K8s Secret</div></div></div>
+      <div class="card-body">
+        <div class="explain eg"><strong>You write 2 resources:</strong><br>
+        <strong>1. SecretStore</strong> — connects to AWS Secrets Manager (once per namespace)<br>
+        <strong>2. ExternalSecret</strong> — which AWS secret to fetch, creates K8s Secret automatically</div>
+        <div class="flow">
+<span class="fb">[AWS Secrets Manager]</span>
+  <span class="fa">stores:</span> <span class="fd">/prod/myapp/secrets = DB_PASSWORD, JWT_SECRET</span>
+<span class="ff">[SecretStore]</span>
+  <span class="fa">tells ESO:</span> <span class="fb">use ap-south-1 + this IAM role</span>
+<span class="ff">[ExternalSecret]</span>
+  <span class="fa">says:</span> <span class="fb">fetch /prod/myapp/secrets every 1 hour</span>
+<span class="fd">[ESO Operator]</span>
+  <span class="fa">creates automatically:</span>
+<span class="fb">[K8s Secret: myapp-secret]</span> <span class="fd">← auto-managed!</span>
+  <span class="fa">injected into pod as:</span>
+<span class="fb">DB_PASSWORD</span><span class="fa">=</span><span class="fd">supersecret  JWT_SECRET</span><span class="fa">=</span><span class="fd">myjwt ✅</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-top"><span class="card-icon">📦</span><div><div class="card-title">Step 1 — Install ESO + Create AWS Secret</div><div class="card-desc">Install External Secrets Operator via Helm</div></div></div>
+      <div class="card-body">
+        <div class="cb"><div class="cb-top"><div class="dot dr"></div><div class="dot dy"></div><div class="dot dg"></div><span class="cb-file">terminal — install ESO</span></div>
+        <pre><span class="cmd">helm repo add</span> <span class="arg">external-secrets</span> \
+  <span class="v">https://charts.external-secrets.io</span>
+<span class="cmd">helm repo update</span>
+
+<span class="cmd">helm install</span> <span class="arg">external-secrets</span> \
+  external-secrets/external-secrets \
+  <span class="arg">--namespace</span> external-secrets \
+  <span class="arg">--create-namespace</span>
+
+<span class="c"># Verify:</span>
+<span class="cmd">kubectl get pods -n external-secrets</span>
+<span class="ok">external-secrets-xxx   Running ✅</span></pre></div>
+        <div class="cb"><div class="cb-top"><div class="dot dr"></div><div class="dot dy"></div><div class="dot dg"></div><span class="cb-file">terminal — store secret in AWS first</span></div>
+        <pre><span class="cmd">aws secretsmanager create-secret</span> \
+  <span class="arg">--name</span> <span class="v">/prod/myapp/secrets</span> \
+  <span class="arg">--secret-string</span> <span class="v">'{"DB_PASSWORD":"supersecret","JWT_SECRET":"myjwt"}'</span> \
+  <span class="arg">--region</span> ap-south-1</pre></div>
+        <div class="alert ab"><span class="alert-icon">💡</span> ESO needs IAM permission. Attach <strong>SecretsManagerReadWrite</strong> policy via IRSA to the ESO service account.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-top"><span class="card-icon">🔗</span><div><div class="card-title">Step 2 — SecretStore</div><div class="card-desc">Connect ESO to your AWS account — once per namespace</div></div></div>
+      <div class="card-body">
+        <div class="explain eg"><strong>SecretStore</strong> is your connection config to AWS. Create one per namespace. Use IRSA in production — never hardcode AWS access keys!</div>
+        <div class="cb"><div class="cb-top"><div class="dot dr"></div><div class="dot dy"></div><div class="dot dg"></div><span class="cb-file">secretstore.yaml</span><span class="cb-label">one per namespace</span></div>
+        <pre><span class="kw">apiVersion</span><span class="di">: </span><span class="v">external-secrets.io/v1beta1</span>
+<span class="kw">kind</span><span class="di">: </span><span class="v">SecretStore</span>
+<span class="k">metadata</span><span class="di">:</span>
+  <span class="k">name</span><span class="di">: </span><span class="hi">aws-secretstore</span>
+  <span class="k">namespace</span><span class="di">: </span><span class="v">production</span>
+<span class="k">spec</span><span class="di">:</span>
+  <span class="k">provider</span><span class="di">:</span>
+    <span class="k">aws</span><span class="di">:</span>
+      <span class="k">service</span><span class="di">: </span><span class="v">SecretsManager</span>
+      <span class="k">region</span><span class="di">: </span><span class="v">ap-south-1</span>
+      <span class="k">auth</span><span class="di">:</span>
+        <span class="k">jwt</span><span class="di">:</span>                     <span class="c"># IRSA — no access keys!</span>
+          <span class="k">serviceAccountRef</span><span class="di">:</span>
+            <span class="k">name</span><span class="di">: </span><span class="v">external-secrets-sa</span>
+<span class="di">---</span>
+<span class="c"># OR ClusterSecretStore for all namespaces at once:</span>
+<span class="kw">kind</span><span class="di">: </span><span class="v">ClusterSecretStore</span>      <span class="c"># no namespace field needed!</span>
+<span class="k">metadata</span><span class="di">:</span>
+  <span class="k">name</span><span class="di">: </span><span class="hi">aws-cluster-secretstore</span></pre></div>
+      </div>
+    </div>
+
+    <div class="card col-2">
+      <div class="card-top"><span class="card-icon">📥</span><div><div class="card-title">Step 3 — ExternalSecret (Fetch + Create K8s Secret)</div><div class="card-desc">One ExternalSecret per app — ESO manages the rest automatically</div></div></div>
+      <div class="card-body">
+        <div class="grid-2">
+          <div>
+            <div class="cb"><div class="cb-top"><div class="dot dr"></div><div class="dot dy"></div><div class="dot dg"></div><span class="cb-file">externalsecret.yaml</span><span class="cb-label">one per app</span></div>
+            <pre><span class="kw">apiVersion</span><span class="di">: </span><span class="v">external-secrets.io/v1beta1</span>
+<span class="kw">kind</span><span class="di">: </span><span class="v">ExternalSecret</span>
+<span class="k">metadata</span><span class="di">:</span>
+  <span class="k">name</span><span class="di">: </span><span class="hi">myapp-external-secret</span>
+  <span class="k">namespace</span><span class="di">: </span><span class="v">production</span>
+<span class="k">spec</span><span class="di">:</span>
+  <span class="k">refreshInterval</span><span class="di">: </span><span class="v">1h</span>           <span class="c"># re-sync every hour</span>
+  <span class="k">secretStoreRef</span><span class="di">:</span>
+    <span class="k">name</span><span class="di">: </span><span class="hi">aws-secretstore</span>         <span class="c"># must match SecretStore!</span>
+    <span class="k">kind</span><span class="di">: </span><span class="v">SecretStore</span>
+  <span class="k">target</span><span class="di">:</span>
+    <span class="k">name</span><span class="di">: </span><span class="hi">myapp-secret</span>            <span class="c"># K8s Secret name to create</span>
+    <span class="k">creationPolicy</span><span class="di">: </span><span class="v">Owner</span>        <span class="c"># ESO owns this secret</span>
+  <span class="k">data</span><span class="di">:</span>
+    <span class="di">- </span><span class="k">secretKey</span><span class="di">: </span><span class="hi">DB_PASSWORD</span>     <span class="c"># key in K8s Secret</span>
+      <span class="k">remoteRef</span><span class="di">:</span>
+        <span class="k">key</span><span class="di">: </span><span class="v">/prod/myapp/secrets</span>   <span class="c"># AWS secret name</span>
+        <span class="k">property</span><span class="di">: </span><span class="v">DB_PASSWORD</span>     <span class="c"># JSON field in AWS secret</span>
+    <span class="di">- </span><span class="k">secretKey</span><span class="di">: </span><span class="hi">JWT_SECRET</span>
+      <span class="k">remoteRef</span><span class="di">:</span>
+        <span class="k">key</span><span class="di">: </span><span class="v">/prod/myapp/secrets</span>
+        <span class="k">property</span><span class="di">: </span><span class="v">JWT_SECRET</span></pre></div>
+          </div>
+          <div>
+            <div class="cb"><div class="cb-top"><div class="dot dr"></div><div class="dot dy"></div><div class="dot dg"></div><span class="cb-file">deployment-using-eso-secret.yaml</span></div>
+            <pre><span class="c"># Use auto-created secret EXACTLY like normal!</span>
+<span class="k">spec</span><span class="di">:</span>
+  <span class="k">template</span><span class="di">:</span>
+    <span class="k">spec</span><span class="di">:</span>
+      <span class="k">containers</span><span class="di">:</span>
+        <span class="di">- </span><span class="k">name</span><span class="di">: </span><span class="v">myapp</span>
+          <span class="k">image</span><span class="di">: </span><span class="v">myapp:1.0.0</span>
+          <span class="k">envFrom</span><span class="di">:</span>
+            <span class="di">- </span><span class="k">secretRef</span><span class="di">:</span>
+                <span class="k">name</span><span class="di">: </span><span class="hi">myapp-secret</span> <span class="c"># created by ESO!</span></pre></div>
+            <div class="cb"><div class="cb-top"><div class="dot dr"></div><div class="dot dy"></div><div class="dot dg"></div><span class="cb-file">terminal — verify sync</span></div>
+            <pre><span class="cmd">kubectl get externalsecret -n production</span>
+<span class="c"># Should show:</span>
+<span class="ok">myapp-external-secret  SecretSynced  True  1h</span>
+
+<span class="cmd">kubectl get secret myapp-secret -n production</span>
+<span class="c"># K8s Secret auto-created by ESO ✅</span></pre></div>
+            <div class="rules">
+              <div class="rule"><span>🔄</span> ESO auto-rotates: update password in AWS → K8s Secret updates on next refresh cycle</div>
+              <div class="rule"><span>🔑</span> <code>secretKey</code> = name in K8s Secret · <code>property</code> = JSON field in AWS secret</div>
+              <div class="rule"><span>🏭</span> This is the industry standard for secrets in EKS production — your Shivam Hospital project should use this!</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="footer">
+  <p>NetworkPolicy · KEDA · AWS Secrets Manager · Advanced Kubernetes Production Cheat Sheet</p>
+  <p style="margin-top:6px;color:#374b6b;">Built for Adishesh · Security + Smart Scaling + Safe Secrets = Truly Production Grade</p>
+</div>
+
+</body>
+</html>
