@@ -1,0 +1,1022 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kubernetes Manifest Cheat Sheet</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap');
+
+  :root {
+    --bg: #0a0e1a;
+    --surface: #0f1629;
+    --surface2: #151d35;
+    --border: #1e2d50;
+    --accent: #00d4ff;
+    --accent2: #7c3aed;
+    --accent3: #10b981;
+    --accent4: #f59e0b;
+    --accent5: #ef4444;
+    --accent6: #ec4899;
+    --text: #e2e8f0;
+    --text-dim: #64748b;
+    --text-bright: #f8fafc;
+    --code-bg: #060910;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    line-height: 1.6;
+    padding: 32px 24px;
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  .header {
+    text-align: center;
+    margin-bottom: 48px;
+    position: relative;
+  }
+
+  .header::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent), var(--accent2), transparent);
+    opacity: 0.4;
+  }
+
+  .header-inner {
+    position: relative;
+    display: inline-block;
+    background: var(--bg);
+    padding: 0 32px;
+  }
+
+  .header h1 {
+    font-size: 2.8rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--accent), var(--accent2), var(--accent6));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -1px;
+    line-height: 1.1;
+  }
+
+  .header p {
+    color: var(--text-dim);
+    font-size: 0.95rem;
+    margin-top: 8px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  /* GRID LAYOUT */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(560px, 1fr));
+    gap: 20px;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  /* CARD */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    transition: transform 0.2s, border-color 0.2s;
+    position: relative;
+  }
+
+  .card:hover {
+    transform: translateY(-2px);
+    border-color: var(--card-accent, var(--accent));
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--card-accent, var(--accent));
+  }
+
+  .card-header {
+    padding: 16px 20px 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+  }
+
+  .card-icon {
+    font-size: 1.4rem;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: color-mix(in srgb, var(--card-accent, var(--accent)) 15%, transparent);
+    border-radius: 8px;
+    border: 1px solid color-mix(in srgb, var(--card-accent, var(--accent)) 30%, transparent);
+  }
+
+  .card-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text-bright);
+    letter-spacing: 0.3px;
+  }
+
+  .card-subtitle {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    margin-top: 1px;
+  }
+
+  .card-kind {
+    margin-left: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--card-accent, var(--accent));
+    background: color-mix(in srgb, var(--card-accent, var(--accent)) 10%, transparent);
+    padding: 3px 10px;
+    border-radius: 20px;
+    border: 1px solid color-mix(in srgb, var(--card-accent, var(--accent)) 25%, transparent);
+  }
+
+  .card-body {
+    padding: 16px 20px;
+  }
+
+  /* EXPLANATION BOX */
+  .explain {
+    background: color-mix(in srgb, var(--card-accent, var(--accent)) 8%, transparent);
+    border-left: 3px solid var(--card-accent, var(--accent));
+    border-radius: 0 8px 8px 0;
+    padding: 10px 14px;
+    margin-bottom: 14px;
+    font-size: 0.85rem;
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  .explain strong {
+    color: var(--card-accent, var(--accent));
+    font-weight: 700;
+  }
+
+  /* CODE BLOCK */
+  .code-block {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+  }
+
+  .code-top {
+    background: #0d1117;
+    padding: 7px 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .dot-r { background: #ff5f57; }
+  .dot-y { background: #ffbd2e; }
+  .dot-g { background: #28c840; }
+
+  .code-filename {
+    margin-left: 6px;
+    font-size: 0.7rem;
+    color: var(--text-dim);
+  }
+
+  pre {
+    padding: 14px 16px;
+    overflow-x: auto;
+    line-height: 1.7;
+    white-space: pre;
+  }
+
+  /* SYNTAX HIGHLIGHTING */
+  .k  { color: #7dd3fc; }   /* key */
+  .v  { color: #86efac; }   /* value string */
+  .n  { color: #fca5a5; }   /* number */
+  .c  { color: #4ade80; }   /* comment */
+  .kw { color: #c084fc; }   /* keyword like apiVersion, kind */
+  .hi { color: #fde68a; }   /* highlight important */
+  .se { color: #fb923c; }   /* secret/sensitive */
+  .di { color: var(--text-dim); } /* dim */
+
+  /* RULES SECTION */
+  .rules {
+    margin-top: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .rule {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 0.82rem;
+    color: var(--text);
+    background: var(--surface2);
+    padding: 7px 12px;
+    border-radius: 7px;
+    border: 1px solid var(--border);
+  }
+
+  .rule-icon {
+    font-size: 0.9rem;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  /* FLOW DIAGRAM */
+  .flow {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    margin-top: 14px;
+    line-height: 1.8;
+  }
+
+  .flow .arrow { color: var(--accent); }
+  .flow .box { color: var(--text-bright); }
+  .flow .label { color: var(--accent4); }
+
+  /* SECTION DIVIDER */
+  .section-label {
+    text-align: center;
+    margin: 32px 0 16px;
+    position: relative;
+  }
+
+  .section-label::before {
+    content: '';
+    position: absolute;
+    top: 50%; left: 0; right: 0;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .section-label span {
+    position: relative;
+    background: var(--bg);
+    padding: 0 16px;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    color: var(--text-dim);
+    font-weight: 700;
+  }
+
+  /* WIDE CARD */
+  .card-wide {
+    grid-column: 1 / -1;
+  }
+
+  .wide-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+  }
+
+  .mini-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+  }
+
+  .mini-card h4 {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-bright);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .mini-card .code-block {
+    font-size: 0.72rem;
+  }
+
+  .tag {
+    display: inline-block;
+    font-size: 0.68rem;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+  }
+
+  .tag-green { background: #052e16; color: #4ade80; border: 1px solid #166534; }
+  .tag-red   { background: #2d0a0a; color: #f87171; border: 1px solid #7f1d1d; }
+  .tag-blue  { background: #0c1a2e; color: #60a5fa; border: 1px solid #1e3a5f; }
+  .tag-yellow{ background: #2d1f00; color: #fbbf24; border: 1px solid #7c5200; }
+
+  /* FOOTER */
+  .footer {
+    text-align: center;
+    margin-top: 48px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    color: var(--text-dim);
+    font-size: 0.8rem;
+    letter-spacing: 1px;
+  }
+
+  .footer span {
+    color: var(--accent);
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-inner">
+    <h1>Kubernetes Manifest</h1>
+    <h1>Cheat Sheet</h1>
+    <p>Every manifest explained · Production ready · Written by reading code</p>
+  </div>
+</div>
+
+<div class="grid" style="max-width:1400px;margin:0 auto;">
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- NAMESPACE -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="card" style="--card-accent: #00d4ff;">
+    <div class="card-header">
+      <div class="card-icon">🏠</div>
+      <div>
+        <div class="card-title">Namespace</div>
+        <div class="card-subtitle">Separate rooms inside your cluster</div>
+      </div>
+      <div class="card-kind">v1</div>
+    </div>
+    <div class="card-body">
+      <div class="explain">
+        <strong>What it is:</strong> Like separate folders for different teams/environments. production, staging, monitoring all live in the same cluster but are isolated from each other.
+      </div>
+      <div class="code-block">
+        <div class="code-top"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="code-filename">namespace.yaml</span></div>
+        <pre><span class="kw">apiVersion</span><span class="di">: </span><span class="v">v1</span>
+<span class="kw">kind</span><span class="di">: </span><span class="v">Namespace</span>
+<span class="k">metadata</span><span class="di">:</span>
+  <span class="k">name</span><span class="di">: </span><span class="hi">production</span>     <span class="c"># name of your namespace</span>
+  <span class="k">labels</span><span class="di">:</span>
+    <span class="k">env</span><span class="di">: </span><span class="v">production</span></pre>
+      </div>
+      <div class="rules">
+        <div class="rule"><span class="rule-icon">💡</span> Every other resource must have <code>namespace: production</code> in metadata</div>
+        <div class="rule"><span class="rule-icon">⚠️</span> Never deploy to <code>default</code> namespace in production</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- CONFIGMAP -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="card" style="--card-accent: #10b981;">
+    <div class="card-header">
+      <div class="card-icon">⚙️</div>
+      <div>
+        <div class="card-title">ConfigMap</div>
+        <div class="card-subtitle">Non-sensitive config as env vars</div>
+      </div>
+      <div class="card-kind">v1</div>
+    </div>
+    <div class="card-body">
+      <div class="explain">
+        <strong>What it is:</strong> A store for non-sensitive config values like URLs, ports, feature flags. Injected into pods as environment variables. <strong>Never put passwords here!</strong>
+      </div>
+      <div class="code-block">
+        <div class="code-top"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="code-filename">configmap.yaml</span></div>
+        <pre><span class="kw">apiVersion</span><span class="di">: </span><span class="v">v1</span>
+<span class="kw">kind</span><span class="di">: </span><span class="v">ConfigMap</span>
+<span class="k">metadata</span><span class="di">:</span>
+  <span class="k">name</span><span class="di">: </span><span class="hi">myapp-config</span>
+  <span class="k">namespace</span><span class="di">: </span><span class="v">production</span>
+<span class="k">data</span><span class="di">:</span>                        <span class="c"># key: value pairs</span>
+  <span class="k">APP_ENV</span><span class="di">: </span><span class="v">"production"</span>
+  <span class="k">PORT</span><span class="di">: </span><span class="v">"8000"</span>              <span class="c"># always strings!</span>
+  <span class="k">REDIS_HOST</span><span class="di">: </span><span class="v">"redis-service"</span>
+  <span class="k">DB_NAME</span><span class="di">: </span><span class="v">"hospitaldb"</span>
+  <span class="se"># ❌ NEVER put passwords here</span></pre>
+      </div>
+      <div class="rules">
+        <div class="rule"><span class="rule-icon">✅</span> ConfigMap = APP_ENV, PORT, HOST names, feature flags</div>
+        <div class="rule"><span class="rule-icon">❌</span> Never = passwords, tokens, API keys, DATABASE_URL with password</div>
+        <div class="rule"><span class="rule-icon">💡</span> All values must be strings — use quotes around numbers</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- SECRET -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="card" style="--card-accent: #ef4444;">
+    <div class="card-header">
+      <div class="card-icon">🔐</div>
+      <div>
+        <div class="card-title">Secret</div>
+        <div class="card-subtitle">Sensitive data — passwords, tokens, keys</div>
+      </div>
+      <div class="card-kind">v1</div>
+    </div>
+    <div class="card-body">
+      <div class="explain">
+        <strong>What it is:</strong> Like ConfigMap but for sensitive data. Values must be <strong>base64 encoded</strong> under <code>data:</code>, OR use <code>stringData:</code> and Kubernetes encodes for you automatically.
+      </div>
+      <div class="code-block">
+        <div class="code-top"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="code-filename">secret.yaml</span></div>
+        <pre><span class="kw">apiVersion</span><span class="di">: </span><span class="v">v1</span>
+<span class="kw">kind</span><span class="di">: </span><span class="v">Secret</span>
+<span class="k">metadata</span><span class="di">:</span>
+  <span class="k">name</span><span class="di">: </span><span class="hi">myapp-secret</span>
+  <span class="k">namespace</span><span class="di">: </span><span class="v">production</span>
+<span class="k">type</span><span class="di">: </span><span class="v">Opaque</span>
+
+<span class="c"># Option 1 — base64 encoded (manual)</span>
+<span class="k">data</span><span class="di">:</span>
+  <span class="k">DB_PASSWORD</span><span class="di">: </span><span class="se">cGFzc3dvcmQxMjM=</span>   <span class="c"># base64!</span>
+  <span class="k">JWT_SECRET</span><span class="di">: </span><span class="se">c2VjcmV0a2V5</span>
+
+<span class="c"># Option 2 — stringData (auto-encodes) ✅ easier</span>
+<span class="k">stringData</span><span class="di">:</span>
+  <span class="k">DB_PASSWORD</span><span class="di">: </span><span class="v">"password123"</span>   <span class="c"># plain text OK here</span>
+  <span class="k">JWT_SECRET</span><span class="di">: </span><span class="v">"secretkey"</span></pre>
+      </div>
+      <div class="rules">
+        <div class="rule"><span class="rule-icon">🔑</span> Encode: <code>echo -n "mypassword" | base64</code></div>
+        <div class="rule"><span class="rule-icon">✅</span> Use <code>stringData:</code> in dev — simpler, no encoding needed</div>
+        <div class="rule"><span class="rule-icon">🏭</span> In production use External Secrets Operator + AWS Secrets Manager</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- DEPLOYMENT -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="card" style="--card-accent: #7c3aed;">
+    <div class="card-header">
+      <div class="card-icon">🚀</div>
+      <div>
+        <div class="card-title">Deployment</div>
+        <div class="card-subtitle">Run your app, keep it alive, restart if crashed</div>
+      </div>
+      <div class="card-kind">apps/v1</div>
+    </div>
+    <div class="card-body">
+      <div class="explain">
+        <strong>What it is:</strong> The main manifest for stateless apps (APIs, frontends). Manages pod replicas, rolling updates, and restarts. Always read the Dockerfile to get <strong>port</strong>, <strong>image</strong>, and <strong>health path</strong>.
+      </div>
+      <div class="code-block">
+        <div class="code-top"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="code-filename">deployment.yaml</span></div>
+        <pre><span class="kw">apiVersion</span><span class="di">: </span><span class="v">apps/v1</span>
+<span class="kw">kind</span><span class="di">: </span><span class="v">Deployment</span>
+<span class="k">metadata</span><span class="di">:</span>
+  <span class="k">name</span><span class="di">: </span><span class="hi">myapp</span>
+  <span class="k">namespace</span><span class="di">: </span><span class="v">production</span>
+  <span class="k">labels</span><span class="di">:</span>
+    <span class="k">app</span><span class="di">: </span><span class="hi">myapp</span>
+<span class="k">spec</span><span class="di">:</span>
+  <span class="k">replicas</span><span class="di">: </span><span class="n">3</span>
+  <span class="k">selector</span><span class="di">:</span>
+    <span class="k">matchLabels</span><span class="di">:</span>
+      <span class="k">app</span><span class="di">: </span><span class="hi">myapp</span>        <span class="c"># 🔑 must match template labels</span>
+  <span class="k">template</span><span class="di">:</span>
+    <span class="k">metadata</span><span class="di">:</span>
+      <span class="k">labels</span><span class="di">:</span>
+        <span class="k">app</span><span class="di">: </span><span class="hi">myapp</span>      <span class="c"># 🔑 Service finds pods by this</span>
+    <span class="k">spec</span><span class="di">:</span>
+      <span class="k">imagePullSecrets</span><span class="di">:</span>        <span class="c"># for private registries</span>
+        <span class="di">- </span><span class="k">name</span><span class="di">: </span><span class="v">ecr-secret</span>
+      <span class="k">containers</span><span class="di">:</span>
+        <span class="di">- </span><span class="k">name</span><span class="di">: </span><span class="v">myapp</span>
+          <span class="k">image</span><span class="di">: </span><span class="hi">myapp:1.0.0</span>   <span class="c"># ← your built image!</span>
+          <span class="k">ports</span><span class="di">:</span>
+            <span class="di">- </span><span class="k">containerPort</span><span class="di">: </span><span class="n">8000</span>  <span class="c"># from EXPOSE in Dockerfile</span>
+          <span class="k">envFrom</span><span class="di">:</span>
+            <span class="di">- </span><span class="k">configMapRef</span><span class="di">:</span>
+                <span class="k">name</span><span class="di">: </span><span class="v">myapp-config</span>
+            <span class="di">- </span><span class="k">secretRef</span><span class="di">:</span>
+                <span class="k">name</span><span class="di">: </span><span class="v">myapp-secret</span>
+          <span class="k">resources</span><span class="di">:</span>
+            <span class="k">requests</span><span class="di">:</span>
+              <span class="k">cpu</span><span class="di">: </span><span class="v">"100m"</span>
+              <span class="k">memory</span><span class="di">: </span><span class="v">"128Mi"</span>
+            <span class="k">limits</span><span class="di">:</span>
+              <span class="k">cpu</span><span class="di">: </span><span class="v">"500m"</span>
+              <span class="k">memory</span><span class="di">: </span><span class="v">"512Mi"</span>
+          <span class="k">readinessProbe</span><span class="di">:</span>         <span class="c"># "ready for traffic?"</span>
+            <span class="k">httpGet</span><span class="di">:</span>              <span class="c"># httpGet is a BLOCK!</span>
+              <span class="k">path</span><span class="di">: </span><span class="v">/health</span>       <span class="c"># from your app code</span>
+              <span class="k">port</span><span class="di">: </span><span class="n">8000</span>
+            <span class="k">initialDelaySeconds</span><span class="di">: </span><span class="n">10</span>
+            <span class="k">periodSeconds</span><span class="di">: </span><span class="n">5</span>
+          <span class="k">livenessProbe</span><span class="di">:</span>          <span class="c"># "still alive?"</span>
+            <span class="k">httpGet</span><span class="di">:</span>
+              <span class="k">path</span><span class="di">: </span><span class="v">/health</span>
+              <span class="k">port</span><span class="di">: </span><span class="n">8000</span>
+            <span class="k">initialDelaySeconds</span><span class="di">: </span><span class="n">15</span>
+            <span class="k">periodSeconds</span><span class="di">: </span><span class="n">10</span></pre>
+      </div>
+      <div class="rules">
+        <div class="rule"><span class="rule-icon">🔑</span> <code>matchLabels</code> must match <code>template.labels</code> exactly</div>
+        <div class="rule"><span class="rule-icon">🐳</span> <code>image</code> = your built app image, NEVER the runtime (python:3.11, node:18)</div>
+        <div class="rule"><span class="rule-icon">🏥</span> <code>httpGet</code> is a block — <code>path</code> and <code>port</code> go INSIDE it</div>
+        <div class="rule"><span class="rule-icon">🔍</span> Check code for <code>/health</code> endpoint → use that as probe path</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- SERVICE -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="card" style="--card-accent: #f59e0b;">
+    <div class="card-header">
+      <div class="card-icon">🔌</div>
+      <div>
+        <div class="card-title">Service</div>
+        <div class="card-subtitle">Stable address to reach your pods</div>
+      </div>
+      <div class="card-kind">v1</div>
+    </div>
+    <div class="card-body">
+      <div class="explain">
+        <strong>What it is:</strong> Pods die and restart with new IPs. Service gives a <strong>stable address</strong> that never changes. It finds pods using labels and load balances across them.
+      </div>
+      <div class="code-block">
+        <div class="code-top"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="code-filename">service.yaml</span></div>
+        <pre><span class="kw">apiVersion</span><span class="di">: </span><span class="v">v1</span>
+<span class="kw">kind</span><span class="di">: </span><span class="v">Service</span>
+<span class="k">metadata</span><span class="di">:</span>
+  <span class="k">name</span><span class="di">: </span><span class="hi">myapp-service</span>
+  <span class="k">namespace</span><span class="di">: </span><span class="v">production</span>
+<span class="k">spec</span><span class="di">:</span>
+  <span class="k">selector</span><span class="di">:</span>
+    <span class="k">app</span><span class="di">: </span><span class="hi">myapp</span>          <span class="c"># 🔑 must match Deployment pod labels</span>
+  <span class="k">ports</span><span class="di">:</span>
+    <span class="di">- </span><span class="k">protocol</span><span class="di">: </span><span class="v">TCP</span>
+      <span class="k">port</span><span class="di">: </span><span class="n">80</span>           <span class="c"># port YOU call from outside</span>
+      <span class="k">targetPort</span><span class="di">: </span><span class="n">8000</span>   <span class="c"># port app runs on (containerPort)</span>
+  <span class="k">type</span><span class="di">: </span><span class="v">ClusterIP</span>        <span class="c"># internal only</span>
+  <span class="c"># type: LoadBalancer   # creates AWS ELB (external)</span>
+  <span class="c"># type: NodePort       # exposes on node IP (dev only)</span></pre>
+      </div>
+      <div class="rules">
+        <div class="rule"><span class="rule-icon">🔑</span> <code>selector.app</code> must match Deployment <code>template.labels.app</code></div>
+        <div class="rule"><span class="rule-icon">🌐</span> <code>port</code> = what callers use · <code>targetPort</code> = what pod actually listens on</div>
+        <div class="rule"><span class="rule-icon">☁️</span> Use <code>ClusterIP</code> for internal · <code>LoadBalancer</code> for external AWS access</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- INGRESS -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="card" style="--card-accent: #ec4899;">
+    <div class="card-header">
+      <div class="card-icon">🚪</div>
+      <div>
+        <div class="card-title">Ingress</div>
+        <div class="card-subtitle">Front door — routes traffic by domain/path</div>
+      </div>
+      <div class="card-kind">networking.k8s.io/v1</div>
+    </div>
+    <div class="card-body">
+      <div class="explain">
+        <strong>What it is:</strong> Routes external traffic to the right Service based on domain name or URL path. One Ingress can route to <strong>multiple services</strong>. Needs NGINX Ingress Controller installed.
+      </div>
+      <div class="code-block">
+        <div class="code-top"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="code-filename">ingress.yaml</span></div>
+        <pre><span class="kw">apiVersion</span><span class="di">: </span><span class="v">networking.k8s.io/v1</span>
+<span class="kw">kind</span><span class="di">: </span><span class="v">Ingress</span>
+<span class="k">metadata</span><span class="di">:</span>              <span class="c"># no space before metadata!</span>
+  <span class="k">name</span><span class="di">: </span><span class="hi">myapp-ingress</span>
+  <span class="k">namespace</span><span class="di">: </span><span class="v">production</span>
+  <span class="k">annotations</span><span class="di">:</span>
+    <span class="k">nginx.ingress.kubernetes.io/rewrite-target</span><span class="di">: </span><span class="v">/</span>
+<span class="k">spec</span><span class="di">:</span>
+  <span class="k">ingressClassName</span><span class="di">: </span><span class="v">nginx</span>
+  <span class="k">rules</span><span class="di">:</span>
+    <span class="di">- </span><span class="k">host</span><span class="di">: </span><span class="v">myapp.example.com</span>
+      <span class="k">http</span><span class="di">:</span>              <span class="c"># ONE http block per host!</span>
+        <span class="k">paths</span><span class="di">:</span>
+          <span class="di">- </span><span class="k">path</span><span class="di">: </span><span class="v">/</span>
+            <span class="k">pathType</span><span class="di">: </span><span class="hi">Prefix</span>   <span class="c"># required!</span>
+            <span class="k">backend</span><span class="di">:</span>
+              <span class="k">service</span><span class="di">:</span>
+                <span class="k">name</span><span class="di">: </span><span class="v">myapp-service</span>
+                <span class="k">port</span><span class="di">:</span>
+                  <span class="k">number</span><span class="di">: </span><span class="n">80</span>
+          <span class="di">- </span><span class="k">path</span><span class="di">: </span><span class="v">/orders</span>    <span class="c"># multiple paths, one http block!</span>
+            <span class="k">pathType</span><span class="di">: </span><span class="v">Prefix</span>
+            <span class="k">backend</span><span class="di">:</span>
+              <span class="k">service</span><span class="di">:</span>
+                <span class="k">name</span><span class="di">: </span><span class="v">orders-service</span>
+                <span class="k">port</span><span class="di">:</span>
+                  <span class="k">number</span><span class="di">: </span><span class="n">80</span></pre>
+      </div>
+      <div class="rules">
+        <div class="rule"><span class="rule-icon">⚠️</span> No space before <code>metadata:</code> — common indentation bug!</div>
+        <div class="rule"><span class="rule-icon">🔑</span> <code>pathType: Prefix</code> is required — don't forget it</div>
+        <div class="rule"><span class="rule-icon">📦</span> Multiple paths → ONE <code>http:</code> block, multiple items under <code>paths:</code></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- HPA -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="card" style="--card-accent: #06b6d4;">
+    <div class="card-header">
+      <div class="card-icon">📈</div>
+      <div>
+        <div class="card-title">HorizontalPodAutoscaler</div>
+        <div class="card-subtitle">Auto scale pods up/down based on CPU/memory</div>
+      </div>
+      <div class="card-kind">autoscaling/v2</div>
+    </div>
+    <div class="card-body">
+      <div class="explain">
+        <strong>What it is:</strong> Watches CPU/memory usage. When traffic spikes → adds more pods automatically. When quiet → removes pods to save cost. Needs <code>resources.requests</code> set in Deployment to work.
+      </div>
+      <div class="code-block">
+        <div class="code-top"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="code-filename">hpa.yaml</span></div>
+        <pre><span class="kw">apiVersion</span><span class="di">: </span><span class="v">autoscaling/v2</span>
+<span class="kw">kind</span><span class="di">: </span><span class="v">HorizontalPodAutoscaler</span>
+<span class="k">metadata</span><span class="di">:</span>
+  <span class="k">name</span><span class="di">: </span><span class="hi">myapp-hpa</span>
+  <span class="k">namespace</span><span class="di">: </span><span class="v">production</span>
+<span class="k">spec</span><span class="di">:</span>
+  <span class="k">scaleTargetRef</span><span class="di">:</span>
+    <span class="k">apiVersion</span><span class="di">: </span><span class="v">apps/v1</span>
+    <span class="k">kind</span><span class="di">: </span><span class="v">Deployment</span>
+    <span class="k">name</span><span class="di">: </span><span class="hi">myapp</span>         <span class="c"># must match Deployment name!</span>
+  <span class="k">minReplicas</span><span class="di">: </span><span class="n">2</span>        <span class="c"># 🔑 OUTSIDE scaleTargetRef!</span>
+  <span class="k">maxReplicas</span><span class="di">: </span><span class="n">10</span>       <span class="c"># 🔑 OUTSIDE scaleTargetRef!</span>
+  <span class="k">metrics</span><span class="di">:</span>
+    <span class="di">- </span><span class="k">type</span><span class="di">: </span><span class="v">Resource</span>
+      <span class="k">resource</span><span class="di">:</span>
+        <span class="k">name</span><span class="di">: </span><span class="v">cpu</span>
+        <span class="k">target</span><span class="di">:</span>
+          <span class="k">type</span><span class="di">: </span><span class="v">Utilization</span>
+          <span class="k">averageUtilization</span><span class="di">: </span><span class="n">70</span>  <span class="c"># scale up at 70% CPU</span></pre>
+      </div>
+      <div class="rules">
+        <div class="rule"><span class="rule-icon">🔑</span> <code>minReplicas</code> and <code>maxReplicas</code> are at SAME level as <code>scaleTargetRef</code></div>
+        <div class="rule"><span class="rule-icon">🔗</span> <code>scaleTargetRef.name</code> must exactly match your Deployment name</div>
+        <div class="rule"><span class="rule-icon">⚙️</span> Deployment must have <code>resources.requests.cpu</code> set or HPA won't work</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- PVC -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="card" style="--card-accent: #84cc16;">
+    <div class="card-header">
+      <div class="card-icon">💾</div>
+      <div>
+        <div class="card-title">PersistentVolumeClaim</div>
+        <div class="card-subtitle">Request for storage that survives pod restarts</div>
+      </div>
+      <div class="card-kind">v1</div>
+    </div>
+    <div class="card-body">
+      <div class="explain">
+        <strong>What it is:</strong> Pods lose all data when they restart. PVC is your request for permanent storage. Think of it as reserving a hard drive for your pod. <strong>EBS</strong> = one pod. <strong>EFS</strong> = many pods.
+      </div>
+      <div class="code-block">
+        <div class="code-top"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="code-filename">pvc.yaml + deployment-with-volume.yaml</span></div>
+        <pre><span class="c"># 1. Create the PVC</span>
+<span class="kw">apiVersion</span><span class="di">: </span><span class="v">v1</span>
+<span class="kw">kind</span><span class="di">: </span><span class="v">PersistentVolumeClaim</span>
+<span class="k">metadata</span><span class="di">:</span>
+  <span class="k">name</span><span class="di">: </span><span class="hi">myapp-pvc</span>
+  <span class="k">namespace</span><span class="di">: </span><span class="v">production</span>
+<span class="k">spec</span><span class="di">:</span>
+  <span class="k">accessModes</span><span class="di">:</span>
+    <span class="di">- </span><span class="hi">ReadWriteOnce</span>      <span class="c"># EBS: 1 pod | ReadWriteMany: EFS</span>
+  <span class="k">resources</span><span class="di">:</span>
+    <span class="k">requests</span><span class="di">:</span>
+      <span class="k">storage</span><span class="di">: </span><span class="n">10Gi</span>
+  <span class="k">storageClassName</span><span class="di">: </span><span class="v">gp2</span>   <span class="c"># gp2=EBS | efs-sc=EFS</span>
+<span class="di">---</span>
+<span class="c"># 2. Mount it in Deployment (inside containers:)</span>
+          <span class="k">volumeMounts</span><span class="di">:</span>
+            <span class="di">- </span><span class="k">name</span><span class="di">: </span><span class="hi">mydata</span>       <span class="c"># 🔑 must match volumes name</span>
+              <span class="k">mountPath</span><span class="di">: </span><span class="v">/app/data</span> <span class="c"># folder inside container</span>
+<span class="c"># 3. Declare it (inside spec: same level as containers:)</span>
+      <span class="k">volumes</span><span class="di">:</span>
+        <span class="di">- </span><span class="k">name</span><span class="di">: </span><span class="hi">mydata</span>           <span class="c"># 🔑 must match volumeMounts</span>
+          <span class="k">persistentVolumeClaim</span><span class="di">:</span>
+            <span class="k">claimName</span><span class="di">: </span><span class="v">myapp-pvc</span> <span class="c"># must match PVC name!</span></pre>
+      </div>
+      <div class="rules">
+        <div class="rule"><span class="rule-icon">🔗</span> 3-way connection: <code>PVC name</code> → <code>claimName</code> → <code>volumes.name</code> → <code>volumeMounts.name</code></div>
+        <div class="rule"><span class="rule-icon">💿</span> EBS (<code>gp2</code>) = ReadWriteOnce = replicas: 1 only</div>
+        <div class="rule"><span class="rule-icon">📁</span> EFS (<code>efs-sc</code>) = ReadWriteMany = multiple replicas share storage</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- STATEFULSET -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="card" style="--card-accent: #f97316;">
+    <div class="card-header">
+      <div class="card-icon">🗄️</div>
+      <div>
+        <div class="card-title">StatefulSet</div>
+        <div class="card-subtitle">For databases — stable names, stable storage</div>
+      </div>
+      <div class="card-kind">apps/v1</div>
+    </div>
+    <div class="card-body">
+      <div class="explain">
+        <strong>What it is:</strong> Like Deployment but for stateful apps (databases). Each pod gets a <strong>fixed name</strong> (postgres-0, postgres-1) and its <strong>own dedicated PVC</strong> that always follows it. Needs a Headless Service.
+      </div>
+      <div class="code-block">
+        <div class="code-top"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="code-filename">statefulset.yaml</span></div>
+        <pre><span class="kw">apiVersion</span><span class="di">: </span><span class="v">apps/v1</span>
+<span class="kw">kind</span><span class="di">: </span><span class="v">StatefulSet</span>
+<span class="k">metadata</span><span class="di">:</span>
+  <span class="k">name</span><span class="di">: </span><span class="hi">postgres</span>
+  <span class="k">namespace</span><span class="di">: </span><span class="v">production</span>
+<span class="k">spec</span><span class="di">:</span>
+  <span class="k">serviceName</span><span class="di">: </span><span class="hi">postgres-headless</span>  <span class="c"># must match Headless Service!</span>
+  <span class="k">replicas</span><span class="di">: </span><span class="n">1</span>
+  <span class="k">selector</span><span class="di">:</span>
+    <span class="k">matchLabels</span><span class="di">:</span>
+      <span class="k">app</span><span class="di">: </span><span class="v">postgres</span>
+  <span class="k">template</span><span class="di">:</span>
+    <span class="k">metadata</span><span class="di">:</span>
+      <span class="k">labels</span><span class="di">:</span>
+        <span class="k">app</span><span class="di">: </span><span class="v">postgres</span>
+    <span class="k">spec</span><span class="di">:</span>
+      <span class="k">containers</span><span class="di">:</span>
+        <span class="di">- </span><span class="k">name</span><span class="di">: </span><span class="v">postgres</span>
+          <span class="k">image</span><span class="di">: </span><span class="v">postgres:15</span>
+          <span class="k">ports</span><span class="di">:</span>
+            <span class="di">- </span><span class="k">containerPort</span><span class="di">: </span><span class="n">5432</span>
+          <span class="k">volumeMounts</span><span class="di">:</span>
+            <span class="di">- </span><span class="k">name</span><span class="di">: </span><span class="hi">pg-data</span>
+              <span class="k">mountPath</span><span class="di">: </span><span class="v">/var/lib/postgresql/data</span>
+  <span class="k">volumeClaimTemplates</span><span class="di">:</span>    <span class="c"># KEY difference from Deployment!</span>
+    <span class="di">- </span><span class="k">metadata</span><span class="di">:</span>
+        <span class="k">name</span><span class="di">: </span><span class="hi">pg-data</span>         <span class="c"># must match volumeMounts name</span>
+      <span class="k">spec</span><span class="di">:</span>
+        <span class="k">accessModes</span><span class="di">: [</span><span class="v">"ReadWriteOnce"</span><span class="di">]</span>
+        <span class="k">storageClassName</span><span class="di">: </span><span class="v">gp2</span>
+        <span class="k">resources</span><span class="di">:</span>
+          <span class="k">requests</span><span class="di">:</span>
+            <span class="k">storage</span><span class="di">: </span><span class="n">20Gi</span>
+<span class="di">---</span>
+<span class="c"># Headless Service (required!)</span>
+<span class="kw">apiVersion</span><span class="di">: </span><span class="v">v1</span>
+<span class="kw">kind</span><span class="di">: </span><span class="v">Service</span>
+<span class="k">metadata</span><span class="di">:</span>
+  <span class="k">name</span><span class="di">: </span><span class="hi">postgres-headless</span>
+<span class="k">spec</span><span class="di">:</span>
+  <span class="k">clusterIP</span><span class="di">: </span><span class="hi">None</span>           <span class="c"># ← makes it headless!</span>
+  <span class="k">selector</span><span class="di">:</span>
+    <span class="k">app</span><span class="di">: </span><span class="v">postgres</span></pre>
+      </div>
+      <div class="rules">
+        <div class="rule"><span class="rule-icon">🔑</span> <code>volumeClaimTemplates</code> auto-creates a PVC per pod (postgres-data-postgres-0)</div>
+        <div class="rule"><span class="rule-icon">📡</span> Always needs a Headless Service (<code>clusterIP: None</code>)</div>
+        <div class="rule"><span class="rule-icon">🏭</span> In production on AWS → use RDS instead of StatefulSet!</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- RBAC -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="card" style="--card-accent: #a78bfa;">
+    <div class="card-header">
+      <div class="card-icon">🛡️</div>
+      <div>
+        <div class="card-title">RBAC (Role + ServiceAccount + RoleBinding)</div>
+        <div class="card-subtitle">Who can do what, where</div>
+      </div>
+      <div class="card-kind">rbac.authorization.k8s.io/v1</div>
+    </div>
+    <div class="card-body">
+      <div class="explain">
+        <strong>What it is:</strong> Controls what each pod/user is allowed to do in the cluster. <strong>ServiceAccount</strong> = identity. <strong>Role</strong> = permissions. <strong>RoleBinding</strong> = connects them.
+      </div>
+      <div class="code-block">
+        <div class="code-top"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="code-filename">rbac.yaml</span></div>
+        <pre><span class="c"># 1. Identity for your pod</span>
+<span class="kw">apiVersion</span><span class="di">: </span><span class="v">v1</span>
+<span class="kw">kind</span><span class="di">: </span><span class="v">ServiceAccount</span>
+<span class="k">metadata</span><span class="di">:</span>
+  <span class="k">name</span><span class="di">: </span><span class="hi">myapp-sa</span>
+  <span class="k">namespace</span><span class="di">: </span><span class="v">production</span>
+<span class="di">---</span>
+<span class="c"># 2. What is this identity allowed to do?</span>
+<span class="kw">apiVersion</span><span class="di">: </span><span class="v">rbac.authorization.k8s.io/v1</span>
+<span class="kw">kind</span><span class="di">: </span><span class="v">Role</span>              <span class="c"># ClusterRole = all namespaces</span>
+<span class="k">metadata</span><span class="di">:</span>
+  <span class="k">name</span><span class="di">: </span><span class="hi">myapp-role</span>
+  <span class="k">namespace</span><span class="di">: </span><span class="v">production</span>
+<span class="k">rules</span><span class="di">:</span>
+  <span class="di">- </span><span class="k">apiGroups</span><span class="di">: [</span><span class="v">""</span><span class="di">]</span>       <span class="c"># "" = core group</span>
+    <span class="k">resources</span><span class="di">: [</span><span class="v">"pods"</span><span class="di">, </span><span class="v">"services"</span><span class="di">]</span>
+    <span class="k">verbs</span><span class="di">: [</span><span class="v">"get"</span><span class="di">, </span><span class="v">"list"</span><span class="di">, </span><span class="v">"watch"</span><span class="di">]</span>
+  <span class="di">- </span><span class="k">apiGroups</span><span class="di">: [</span><span class="v">"apps"</span><span class="di">]</span>
+    <span class="k">resources</span><span class="di">: [</span><span class="v">"deployments"</span><span class="di">]</span>
+    <span class="k">verbs</span><span class="di">: [</span><span class="v">"get"</span><span class="di">, </span><span class="v">"list"</span><span class="di">, </span><span class="v">"update"</span><span class="di">]</span>
+<span class="di">---</span>
+<span class="c"># 3. Connect SA to Role</span>
+<span class="kw">apiVersion</span><span class="di">: </span><span class="v">rbac.authorization.k8s.io/v1</span>
+<span class="kw">kind</span><span class="di">: </span><span class="v">RoleBinding</span>
+<span class="k">metadata</span><span class="di">:</span>
+  <span class="k">name</span><span class="di">: </span><span class="hi">myapp-binding</span>
+  <span class="k">namespace</span><span class="di">: </span><span class="v">production</span>
+<span class="k">subjects</span><span class="di">:</span>
+  <span class="di">- </span><span class="k">kind</span><span class="di">: </span><span class="v">ServiceAccount</span>
+    <span class="k">name</span><span class="di">: </span><span class="hi">myapp-sa</span>         <span class="c"># must match ServiceAccount!</span>
+    <span class="k">namespace</span><span class="di">: </span><span class="v">production</span>
+<span class="k">roleRef</span><span class="di">:</span>
+  <span class="k">kind</span><span class="di">: </span><span class="v">Role</span>
+  <span class="k">name</span><span class="di">: </span><span class="hi">myapp-role</span>         <span class="c"># must match Role!</span>
+  <span class="k">apiGroup</span><span class="di">: </span><span class="v">rbac.authorization.k8s.io</span>
+<span class="c"># 4. Assign to Deployment under spec.template.spec:</span>
+<span class="c">#    serviceAccountName: myapp-sa</span></pre>
+      </div>
+      <div class="rules">
+        <div class="rule"><span class="rule-icon">🔗</span> SA name → RoleBinding subjects → Role name → RoleBinding roleRef</div>
+        <div class="rule"><span class="rule-icon">🌍</span> <code>Role</code> = one namespace · <code>ClusterRole</code> = all namespaces</div>
+        <div class="rule"><span class="rule-icon">🚫</span> Never use <code>default</code> ServiceAccount in production pods</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- WIDE CARD — Detective Cheat Sheet -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="card card-wide" style="--card-accent: #00d4ff;">
+    <div class="card-header">
+      <div class="card-icon">🕵️</div>
+      <div>
+        <div class="card-title">How to Read Any Dockerfile → Write YAML</div>
+        <div class="card-subtitle">The detective method — extract everything before writing</div>
+      </div>
+      <div class="card-kind">CHEAT CODE</div>
+    </div>
+    <div class="card-body">
+      <div class="wide-grid">
+        <div class="mini-card">
+          <h4>📄 Read Dockerfile For</h4>
+          <div class="code-block">
+            <pre style="padding:10px 12px;"><span class="hi">EXPOSE 8080</span>     → containerPort: 8080
+                  → targetPort: 8080
+<span class="hi">FROM node:18</span>    → image: myapp:1.0.0
+                  (NOT node:18 — your app!)
+<span class="hi">CMD [...:5000]</span>  → confirms port 5000</pre>
+          </div>
+        </div>
+        <div class="mini-card">
+          <h4>🐍 Read App Code For</h4>
+          <div class="code-block">
+            <pre style="padding:10px 12px;"><span class="hi">@app.get("/health")</span>  → probe path: /health
+<span class="hi">os.getenv("DB_PASS")</span> → goes in Secret
+<span class="hi">os.getenv("PORT")</span>    → goes in ConfigMap
+<span class="hi">open("/app/data")</span>   → needs PVC!</pre>
+          </div>
+        </div>
+        <div class="mini-card">
+          <h4>🔑 .env File Sorting Rule</h4>
+          <div class="code-block">
+            <pre style="padding:10px 12px;"><span class="c">ConfigMap (not sensitive):</span>
+<span class="v">PORT, APP_ENV, HOST names</span>
+<span class="v">DB_NAME, LOG_LEVEL, URLs</span>
+
+<span class="se">Secret (sensitive):</span>
+<span class="se">PASSWORDS, TOKENS, API_KEYS</span>
+<span class="se">DATABASE_URL (has password!)</span></pre>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:14px;">
+        <div class="flow">
+<span class="box">Dockerfile</span> <span class="arrow">──→</span> <span class="label">EXPOSE</span> <span class="arrow">──→</span> <span class="box">containerPort + targetPort</span>
+<span class="box">app code  </span> <span class="arrow">──→</span> <span class="label">/health</span> <span class="arrow">──→</span> <span class="box">readinessProbe + livenessProbe path</span>
+<span class="box">.env file </span> <span class="arrow">──→</span> <span class="label">sensitive?</span> <span class="arrow">──→</span> <span class="box">YES → Secret  |  NO → ConfigMap</span>
+<span class="box">replicas  </span> <span class="arrow">──→</span> <span class="label">stateless?</span> <span class="arrow">──→</span> <span class="box">YES → Deployment  |  NO → StatefulSet</span>
+<span class="box">storage   </span> <span class="arrow">──→</span> <span class="label">shared pods?</span> <span class="arrow">──→</span> <span class="box">YES → EFS (RWX)  |  NO → EBS (RWO)</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- COMMON BUGS -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="card card-wide" style="--card-accent: #ef4444;">
+    <div class="card-header">
+      <div class="card-icon">🐛</div>
+      <div>
+        <div class="card-title">Top 8 Bugs That Will Break Your YAML</div>
+        <div class="card-subtitle">The same mistakes kill every beginner — memorize these</div>
+      </div>
+      <div class="card-kind">AVOID THESE</div>
+    </div>
+    <div class="card-body">
+      <div class="wide-grid" style="grid-template-columns: repeat(4,1fr);">
+        <div class="mini-card">
+          <h4><span style="color:#ef4444;">❌</span> Wrong image</h4>
+          <div class="code-block"><pre style="padding:8px 12px;font-size:0.72rem;"><span class="se">image: python:3.11  # runtime!</span>
+<span class="v">image: myapp:1.0.0  # correct</span></pre></div>
+        </div>
+        <div class="mini-card">
+          <h4><span style="color:#ef4444;">❌</span> httpGet as string</h4>
+          <div class="code-block"><pre style="padding:8px 12px;font-size:0.72rem;"><span class="se">httpGet: /health    # wrong!</span>
+<span class="v">httpGet:            # correct</span>
+<span class="v">  path: /health</span>
+<span class="v">  port: 8000</span></pre></div>
+        </div>
+        <div class="mini-card">
+          <h4><span style="color:#ef4444;">❌</span> Secret not encoded</h4>
+          <div class="code-block"><pre style="padding:8px 12px;font-size:0.72rem;"><span class="se">data:</span>
+<span class="se">  PASS: "plain"   # wrong!</span>
+<span class="v">stringData:</span>
+<span class="v">  PASS: "plain"   # correct</span></pre></div>
+        </div>
+        <div class="mini-card">
+          <h4><span style="color:#ef4444;">❌</span> HPA indent bug</h4>
+          <div class="code-block"><pre style="padding:8px 12px;font-size:0.72rem;"><span class="se">  scaleTargetRef:</span>
+<span class="se">    name: myapp</span>
+<span class="se">    minReplicas: 2  # wrong!</span>
+<span class="v">  minReplicas: 2  # correct</span></pre></div>
+        </div>
+        <div class="mini-card">
+          <h4><span style="color:#ef4444;">❌</span> Dots in names</h4>
+          <div class="code-block"><pre style="padding:8px 12px;font-size:0.72rem;"><span class="se">name: node.js-app  # wrong!</span>
+<span class="v">name: nodejs-app   # correct</span>
+<span class="c"># only a-z 0-9 hyphens!</span></pre></div>
+        </div>
+        <div class="mini-card">
+          <h4><span style="color:#ef4444;">❌</span> Labels mismatch</h4>
+          <div class="code-block"><pre style="padding:8px 12px;font-size:0.72rem;"><span class="se">matchLabels: app: myapp</span>
+<span class="se">template labels: app: MY-APP</span>
+<span class="v"># all must be identical!</span></pre></div>
+        </div>
+        <div class="mini-card">
+          <h4><span style="color:#ef4444;">❌</span> Missing pathType</h4>
+          <div class="code-block"><pre style="padding:8px 12px;font-size:0.72rem;"><span class="se">- path: /          # wrong!</span>
+<span class="se">  backend: ...</span>
+<span class="v">- path: /</span>
+<span class="v">  pathType: Prefix  # correct!</span></pre></div>
+        </div>
+        <div class="mini-card">
+          <h4><span style="color:#ef4444;">❌</span> Password in ConfigMap</h4>
+          <div class="code-block"><pre style="padding:8px 12px;font-size:0.72rem;"><span class="se">DATABASE_URL: psql://  # has password!</span>
+<span class="se">  → ConfigMap = WRONG!</span>
+<span class="v">DATABASE_URL: psql://</span>
+<span class="v">  → Secret = correct!</span></pre></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  <p>Kubernetes Manifest Cheat Sheet · Built for <span>Adishesh</span> · Production Ready</p>
+  <p style="margin-top:6px;">Read code first → extract port, image, health path, env vars → then write YAML</p>
+</div>
+
+</body>
+</html>
